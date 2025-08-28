@@ -11,7 +11,7 @@ model = dict(
     type="DefaultSegmentor",
     backbone=dict(
         type="SpUNet-v1m1",
-        in_channels=3,
+        in_channels=4,
         num_classes=8,
         channels=(32, 64, 128, 256, 256, 128, 96, 96),
         layers=(2, 3, 4, 6, 2, 2, 2, 2),
@@ -20,8 +20,8 @@ model = dict(
 )
 
 # scheduler settings
-epoch = 50
-eval_epoch = 50
+epoch = 100
+eval_epoch = 100
 optimizer = dict(type="AdamW", lr=0.002, weight_decay=0.005)
 scheduler = dict(
     type="OneCycleLR",
@@ -81,7 +81,7 @@ data = dict(
             dict(
                 type="Collect",
                 keys=("coord", "grid_coord", "segment"),
-                feat_keys=("coord",),
+                feat_keys=("coord", "strength"),
             ),
         ],
         test_mode=False,
@@ -107,7 +107,7 @@ data = dict(
                 type="Collect",
                 keys=("coord", "grid_coord", "segment",
                       "origin_segment", "inverse"),
-                feat_keys=("coord",),
+                feat_keys=("coord", "strength"),
             ),
         ],
         test_mode=False,
@@ -143,7 +143,7 @@ data = dict(
                 dict(
                     type="Collect",
                     keys=("coord", "grid_coord", "index"),
-                    feat_keys=("coord",),
+                    feat_keys=("coord", "strength"),
                 ),
             ],
             aug_transform=[
