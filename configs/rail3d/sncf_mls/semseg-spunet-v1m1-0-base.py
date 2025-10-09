@@ -1,4 +1,4 @@
-_base_ = ["../_base_/default_runtime.py"]
+_base_ = ["../../_base_/default_runtime.py"]
 
 # misc custom setting
 batch_size = 8  # bs: total bs in all gpus
@@ -8,47 +8,15 @@ enable_amp = True
 
 # model settings
 model = dict(
-    type="DefaultSegmentorV2",
-    num_classes=8,
-    backbone_out_channels=64,
+    type="DefaultSegmentor",
     backbone=dict(
-        type="PT-v3m1",
+        type="SpUNet-v1m1",
         in_channels=4,
-        order=["z", "z-trans", "hilbert", "hilbert-trans"],
-        stride=(2, 2, 2, 2),
-        enc_depths=(2, 2, 2, 6, 2),
-        enc_channels=(32, 64, 128, 256, 512),
-        enc_num_head=(2, 4, 8, 16, 32),
-        enc_patch_size=(1024, 1024, 1024, 1024, 1024),
-        dec_depths=(2, 2, 2, 2),
-        dec_channels=(64, 64, 128, 256),
-        dec_num_head=(4, 4, 8, 16),
-        dec_patch_size=(1024, 1024, 1024, 1024),
-        mlp_ratio=4,
-        qkv_bias=True,
-        qk_scale=None,
-        attn_drop=0.0,
-        proj_drop=0.0,
-        drop_path=0.3,
-        shuffle_orders=True,
-        pre_norm=True,
-        enable_rpe=False,
-        enable_flash=True,
-        upcast_attention=False,
-        upcast_softmax=False,
-        cls_mode=False,
-        pdnorm_bn=False,
-        pdnorm_ln=False,
-        pdnorm_decouple=True,
-        pdnorm_adaptive=False,
-        pdnorm_affine=True,
-        pdnorm_conditions=("nuScenes", "SemanticKITTI", "Waymo"),
+        num_classes=8,
+        channels=(32, 64, 128, 256, 256, 128, 96, 96),
+        layers=(2, 3, 4, 6, 2, 2, 2, 2),
     ),
-    criteria=[
-        dict(type="CrossEntropyLoss", loss_weight=1.0, ignore_index=-1),
-        dict(type="LovaszLoss", mode="multiclass",
-             loss_weight=1.0, ignore_index=-1),
-    ],
+    criteria=[dict(type="CrossEntropyLoss", loss_weight=1.0, ignore_index=-1)],
 )
 
 # scheduler settings
@@ -57,13 +25,12 @@ eval_epoch = 50
 optimizer = dict(type="AdamW", lr=0.002, weight_decay=0.005)
 scheduler = dict(
     type="OneCycleLR",
-    max_lr=[0.002, 0.0002],
+    max_lr=optimizer["lr"],
     pct_start=0.04,
     anneal_strategy="cos",
     div_factor=10.0,
     final_div_factor=100.0,
 )
-param_dicts = [dict(keyword="block", lr=0.0002)]
 
 # dataset settings
 dataset_type = "DefaultDataset"
@@ -95,7 +62,7 @@ data = dict(
                  axis="z", center=[0, 0, 0], p=0.5),
             # dict(type="RandomRotate", angle=[-1/6, 1/6], axis="x", p=0.5),
             # dict(type="RandomRotate", angle=[-1/6, 1/6], axis="y", p=0.5),
-            dict(type="PointClip", point_cloud_range=(-75.2, -75.2, -4, 75.2, 75.2, 2)),
+            dict(type="PointClip", point_cloud_range=(-35.2, -35.2, -4, 35.2, 35.2, 2)),
             dict(type="RandomScale", scale=[0.9, 1.1]),
             # dict(type="RandomShift", shift=[0.2, 0.2, 0.2]),
             dict(type="RandomFlip", p=0.5),
@@ -126,7 +93,7 @@ data = dict(
         data_root=data_root,
         transform=[
             dict(type="Copy", keys_dict={"segment": "origin_segment"}),
-            dict(type="PointClip", point_cloud_range=(-75.2, -75.2, -4, 75.2, 75.2, 2)),
+            dict(type="PointClip", point_cloud_range=(-35.2, -35.2, -4, 35.2, 35.2, 2)),
             dict(
                 type="GridSample",
                 grid_size=0.05,
@@ -151,7 +118,7 @@ data = dict(
         split="test",
         data_root=data_root,
         transform=[
-            dict(type="PointClip", point_cloud_range=(-75.2, -75.2, -4, 75.2, 75.2, 2)),
+            dict(type="PointClip", point_cloud_range=(-35.2, -35.2, -4, 35.2, 35.2, 2)),
             dict(type="Copy", keys_dict={"segment": "origin_segment"}),
             dict(
                 type="GridSample",
